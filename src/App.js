@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react'
 import Task from './components/Tasks'
 import Notification from './components/Notification'
+import EditForm from './components/EditForm'
 import './App.css'
 import axios from 'axios'
 
 function App() {
 	const [tasks, setTasks] = useState([])
 	const [newTask, setNewTask] = useState('')
+	const [editedTask, setEditedTask] = useState(null)
+	const [previousFocusEl, setPreviousFocusEl] = useState(null)
+	const [isEditing, setIsEditing] = useState(false)
 	const [errorMessage, setErrorMessage] = useState('')
 	useEffect(() => {
 		axios
@@ -52,15 +56,44 @@ function App() {
 	}
 
 
+	const updateTask = (task) => {
+		setTasks(prevState => prevState.map(t => (
+			t.id === task.id
+				? { ...t, content: task.content }
+				: t
+		)))
+		closeEditMode()
+	}
+
+	const closeEditMode = () => {
+		setIsEditing(false)
+		previousFocusEl.focus()
+	}
+
+	const enterEditMode = (task) => {
+		setEditedTask(task)
+		setIsEditing(true)
+		setPreviousFocusEl(document.activeElement)
+	}
 
 	return (
 		<div className="App">
 			<Notification message={errorMessage} />
+			{
+				isEditing && (
+					<EditForm
+						editedTask={editedTask}
+						updateTask={updateTask}
+						closeEditMode={closeEditMode}
+					/>
+				)
+			}
 			<ul>
 				{tasks.map(task =>
 					<Task
 						key={task.id}
 						task={task.content}
+						enterEditMode={enterEditMode}
 						deleteTask={() => deleteTaskOf(task.id)}
 					/>
 				)}
